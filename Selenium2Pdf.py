@@ -9,14 +9,16 @@
 
 import sys
 import os
-import time
 import json
 import base64
+import time
 from datetime import datetime
 from selenium import webdriver
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 def main(args):
+  # sw = StopWatch()
   url = 'https://www.google.com'
   out_file = f'z_test_{datetime.now().strftime("%y%m%d-%H%M%S.%f")}.pdf'
   out_path = os.path.split(sys.argv[0])[0]
@@ -27,7 +29,8 @@ def main(args):
   wd_dcap = webdriver.DesiredCapabilities.CHROME.copy()
 
   wd_opts = webdriver.chrome.options.Options()
-  # Note: headless must be enabled for PDF to work:
+  # Note: headless must be enabled for PDF to avoid the
+  #       ambiguous 'Printing is not available' error.
   wd_opts.add_argument('--headless')
   wd_opts.add_argument('--disable-gpu')
 
@@ -36,8 +39,11 @@ def main(args):
   with webdriver.Chrome(service=chr_svc, options=wd_opts, desired_capabilities=wd_dcap) as driver:
     driver.get(url)
 
-    # (optional) Wait for window.document.readyState = complete
-    waitForReadyState(driver)
+    # (optional) Wait for document.readyState = complete
+    # WebDriverWait(driver, timeout=5, poll_frequency=0.5).until(_waitForDocReady)
+
+    assert driver.page_source != '<html><head></head><body></body></html>' \
+              ,f"Url could not be loaded: {url}"
 
     result = send_cmd(driver, "Page.printToPDF", params={
              'landscape': True
@@ -56,14 +62,13 @@ def main(args):
   if not os.path.isfile(out_path_full):
     raise Exception(f"PDF WAS NOT GENERATED: {out_path_full}")
 
-  print(f"PDF Generated - ./{out_path_full}")
+  print(f"PDF Generated - ./{out_path_full}") # . Time: {sw.elapsed(1)}s
 
 
-def waitForReadyState(browser):
-    rs = browser.execute_script('return document.readyState;')
-    if rs == 'complete': return
-    time.sleep(0.25)
-    waitForReadyState(browser)
+def _waitForDocReady(driver):
+  rs = driver.execute_script('return document.readyState;')
+  if rs == 'complete': return True
+  return False
     
 
 def send_cmd(driver, cmd, params={}):
@@ -73,6 +78,19 @@ def send_cmd(driver, cmd, params={}):
     ,json.dumps({'cmd': cmd, 'params': params}))
   if response.get('status'): raise Exception(response.get('value'))
   return response.get('value')
+
+
+class StopWatch:
+    def __init__(self):
+        self.start()
+    def start(self):
+        self._startTime = time.time()
+    def getStartTime(self):
+        return self._startTime
+    def elapsed(self, prec=3):
+        prec = 3 if prec is None or not isinstance(prec, int) else prec
+        diff= time.time() - self._startTime
+        return round(diff, prec)
 
 
 if __name__ == '__main__':
