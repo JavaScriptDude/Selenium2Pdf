@@ -51,7 +51,7 @@ def main(args):
             ,'format': 'A4'
             ,'displayHeaderFooter': True
             ,'headerTemplate': '<span style="font-size:8px; margin-left: 5px">Page 1 of 1</span>'
-            ,'footerTemplate': f'<span style="font-size:8px; margin-left: 5px">Generated on {datetime.now().strftime("%-m/%-d/%Y at %H:%M")}</span>'
+            ,'footerTemplate': f'<span style="font-size:8px; margin-left: 5px">Generated on {datetime.now().strftime("%m/%d/%Y at %H:%M")}</span>'
             ,'scale': 1.65
             ,'pageRanges': '1'
     })
