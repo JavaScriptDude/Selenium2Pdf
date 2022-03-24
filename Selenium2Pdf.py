@@ -19,7 +19,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 def main(args):
   # sw = StopWatch()
-  url = 'https://www.google.com'
+  url = 'https://en.wikipedia.org/wiki/Headless_browser'
   out_file = f'z_test_{datetime.now().strftime("%y%m%d-%H%M%S.%f")}.pdf'
   out_path = os.path.split(sys.argv[0])[0]
   if out_path == '': out_path = os.getcwd()
@@ -45,15 +45,16 @@ def main(args):
     assert driver.page_source != '<html><head></head><body></body></html>' \
               ,f"Url could not be loaded: {url}"
 
+    # For full options see:
+    #   https://chromedevtools.github.io/devtools-protocol/tot/Page/#method-printToPDF
     result = send_cmd(driver, "Page.printToPDF", params={
              'landscape': True
             ,'margin':{'top':'1cm', 'right':'1cm', 'bottom':'1cm', 'left':'1cm'}
             ,'format': 'A4'
             ,'displayHeaderFooter': True
-            ,'headerTemplate': '<span style="font-size:8px; margin-left: 5px">Page 1 of 1</span>'
-            ,'footerTemplate': f'<span style="font-size:8px; margin-left: 5px">Generated on {datetime.now().strftime("%m/%d/%Y at %H:%M")}</span>'
-            ,'scale': 1.65
-            ,'pageRanges': '1'
+            ,'headerTemplate': '<span style="font-size:8px; margin-left: 5px">Page <span class=pageNumber></span> of <span class=totalPages></span></span>'
+            ,'footerTemplate': f'<span style="font-size:8px; margin-left: 5px">Generated on {datetime.now().strftime("%m/%d/%Y at %H:%M")} - url = <span class=url></span></span>'
+            ,'scale': 1
     })
 
     with open(out_path_full, 'wb') as file:
